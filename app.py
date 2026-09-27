@@ -3,7 +3,6 @@ import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
 
-
 st.set_page_config(
     page_title="AI Onion Quality Grading",
     page_icon="🧅"
@@ -15,11 +14,10 @@ st.write("Capture or upload an onion image to check its quality.")
 
 @st.cache_resource
 def load_model():
-    return YOLO("best.pt")
+    return YOLO("ragaai_catalyst/best.pt")
 
 
 model = load_model()
-
 
 camera_image = st.camera_input("📷 Capture Onion")
 
@@ -27,7 +25,6 @@ uploaded_image = st.file_uploader(
     "Or upload an onion image",
     type=["jpg", "jpeg", "png"]
 )
-
 
 image_file = camera_image if camera_image is not None else uploaded_image
 
@@ -66,7 +63,6 @@ if image_file is not None:
 
                     elif class_name == "Bad_Onion":
                         bad_score = max(bad_score, confidence)
-
 
         if good_score == 0 and bad_score == 0:
 
