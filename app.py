@@ -10,9 +10,11 @@ st.set_page_config(
 st.title("🧅 AI Onion Quality Grading")
 st.write("Capture or upload an onion image to check its quality.")
 
+
 @st.cache_resource
 def load_model():
     return YOLO("ragaai_catalyst/best.pt")
+
 
 model = load_model()
 
@@ -73,7 +75,3 @@ if image_file is not None:
 
         else:
             st.error("❌ BAD ONION")
-        else:
-            st.error("❌ BAD ONION")
-
-        
