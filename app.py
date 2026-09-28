@@ -39,7 +39,7 @@ if image_file is not None:
 
         results = model(
             image,
-            conf=0.35,
+            conf=0.70,
             verbose=False
         )
 
@@ -66,11 +66,13 @@ if image_file is not None:
                     bad_score = max(bad_score, confidence)
 
         if good_score == 0 and bad_score == 0:
-            st.warning("⚠️ UNCERTAIN")
+            st.warning("⚠️ NO ONION FOUND")
 
         elif good_score > bad_score:
             st.success("✅ GOOD ONION")
 
+        else:
+            st.error("❌ BAD ONION")
         else:
             st.error("❌ BAD ONION")
 
