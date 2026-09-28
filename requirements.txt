@@ -1,4 +1,3 @@
-streamlit
-ultralytics
-opencv-python-headless
-Pillow
+import streamlit as st
+from ultralytics import YOLO
+from PIL import Image
