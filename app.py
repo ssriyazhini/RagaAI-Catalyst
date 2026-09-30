@@ -1,22 +1,39 @@
+```python
+import os
+import requests
 import streamlit as st
-from ultralytics import YOLO
 from PIL import Image
+from ultralytics import YOLO
 
 st.set_page_config(
-    page_title="AI Onion Quality Grading",
-    page_icon="🧅"
+    page_title="Onion Grading AI",
+    page_icon="🧅",
+    layout="centered"
 )
 
-st.title("🧅 AI Onion Quality Grading")
-st.write("Capture or upload an onion image to check its quality.")
+st.title("🧅 Onion Grading AI")
+st.write("Upload or capture an onion image to check its quality.")
+
+MODEL_URL = "https://github.com/ssriyazhini/RagaAI-Catalyst/releases/download/v1.0/best.4.pt"
+MODEL_PATH = "/tmp/best.pt"
 
 
 @st.cache_resource
 def load_model():
-    return YOLO("ragaai_catalyst/best.pt")
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("Loading AI model..."):
+            response = requests.get(MODEL_URL, timeout=120)
+            response.raise_for_status()
+
+            with open(MODEL_PATH, "wb") as f:
+                f.write(response.content)
+
+    return YOLO(MODEL_PATH)
 
 
 model = load_model()
+
+st.success("AI model loaded successfully!")
 
 camera_image = st.camera_input("📷 Capture Onion")
 
@@ -29,7 +46,7 @@ image_file = camera_image if camera_image is not None else uploaded_image
 
 if image_file is not None:
 
-    image = Image.open(image_file).convert("RGB")
+    image = Image.open(image_file)
 
     st.image(
         image,
@@ -37,41 +54,36 @@ if image_file is not None:
         use_container_width=True
     )
 
-    if st.button("🔍 Analyze Onion"):
+    if st.button("🔍 Check Onion Quality"):
 
-        results = model(
-            image,
-            conf=0.70,
-            verbose=False
-        )
+        with st.spinner("Analyzing onion..."):
 
-        good_score = 0.0
-        bad_score = 0.0
+            results = model.predict(
+                source=image,
+                conf=0.25,
+                verbose=False
+            )
 
-        for result in results:
+        result = results[0]
 
-            if result.boxes is None:
-                continue
+        if result.boxes is not None and len(result.boxes) > 0:
 
-            for cls, conf in zip(
-                result.boxes.cls,
-                result.boxes.conf
-            ):
+            # Get the highest-confidence detection
+            confidences = result.boxes.conf.cpu().numpy()
+            class_ids = result.boxes.cls.cpu().numpy()
 
-                class_name = model.names[int(cls)]
-                confidence = float(conf)
+            best_index = confidences.argmax()
 
-                if class_name == "GoodOnion":
-                    good_score = max(good_score, confidence)
+            best_class = int(class_ids[best_index])
+            best_confidence = float(confidences[best_index])
 
-                elif class_name == "Bad_Onion":
-                    bad_score = max(bad_score, confidence)
+            class_name = result.names[best_class].lower()
 
-        if good_score == 0 and bad_score == 0:
-            st.warning("⚠️ NO ONION FOUND")
-
-        elif good_score > bad_score:
-            st.success("✅ GOOD ONION")
+            if class_name == "good":
+                st.success("🟢 GOOD ONION")
+            else:
+                st.error("🔴 BAD ONION")
 
         else:
-            st.error("❌ BAD ONION")
+            st.warning("⚠️ Onion could not be detected. Please try another image.")
+```
