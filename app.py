@@ -12,20 +12,17 @@ st.write("Upload or capture an onion image to check its quality.")
 MODEL_URL = "https://github.com/ssriyazhini/RagaAI-Catalyst/releases/download/v1.0/best.4.pt"
 MODEL_PATH = "/tmp/best.pt"
 
-@st.cache_resource
-def load_model():
 if not os.path.exists(MODEL_PATH):
-with st.spinner("Loading AI model..."):
+st.info("Loading AI model...")
 response = requests.get(MODEL_URL, timeout=120)
 response.raise_for_status()
+
+```
 with open(MODEL_PATH, "wb") as f:
-f.write(response.content)
-
-```
-return YOLO(MODEL_PATH)
+    f.write(response.content)
 ```
 
-model = load_model()
+model = YOLO(MODEL_PATH)
 
 st.success("AI model loaded successfully!")
 
@@ -36,20 +33,31 @@ uploaded_image = st.file_uploader(
 type=["jpg", "jpeg", "png"]
 )
 
-image_file = camera_image if camera_image is not None else uploaded_image
+if camera_image is not None:
+image_file = camera_image
+elif uploaded_image is not None:
+image_file = uploaded_image
+else:
+image_file = None
 
 if image_file is not None:
 image = Image.open(image_file)
-st.image(image, caption="Selected Onion", use_container_width=True)
 
 ```
+st.image(
+    image,
+    caption="Selected Onion",
+    use_container_width=True
+)
+
 if st.button("🔍 Check Onion Quality"):
-    with st.spinner("Analyzing onion..."):
-        results = model.predict(
-            source=image,
-            conf=0.25,
-            verbose=False
-        )
+    st.write("Analyzing...")
+
+    results = model.predict(
+        source=image,
+        conf=0.25,
+        verbose=False
+    )
 
     result = results[0]
 
@@ -69,3 +77,4 @@ if st.button("🔍 Check Onion Quality"):
     else:
         st.warning("⚠️ Onion could not be detected. Please try another image.")
 ```
+
